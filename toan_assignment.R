@@ -57,3 +57,54 @@ solution <- data.frame(id = test$id, prediction = prediction)
 
 # Write the solution to file
 write.csv(solution, file = '~/Documents/R/data/rf_mod_Solution.csv', row.names = F)
+
+rm(list=ls())
+library(readr)
+install.packages()
+library(ggplot2)
+library(lattice)
+library(plyr)
+library(dplyr)
+library(caret)
+library(mlbench)
+
+library(foreign)
+library(ggplot2)
+library(reshape)
+library(scales)
+library(e1071)
+library(MASS)
+library(klaR)
+library(C50)
+library(kernlab)
+library(nnet)
+
+rm(list=ls())
+train <- read.csv("~/Documents/R/data/train.csv")
+train <- subset(train, select = -c(duration))
+
+test <- read.csv("~/Documents/R/data/test.csv")
+test <- subset(test, select = -c(duration))
+
+prop.table(table(train$y))
+nrow(train)
+prop.table(table(test$y))
+nrow(test)
+
+TrainingParameters <- trainControl(method = "cv", number = 12, repeats = 5)
+DecTreeModel <- train(y ~ ., data = train, 
+                      method = "C5.0",
+                      trControl= TrainingParameters,
+                      na.action = na.omit)
+
+
+#DecTreeModel
+#summary(DecTreeModel)
+DTPredictions <-predict(DecTreeModel, test, na.action = na.pass)
+#confusionMatrix(DTPredictions, test$y)
+# Save the solution to a dataframe with two columns: PassengerId and Survived (prediction)
+solution <- data.frame(id = test$id, prediction = DTPredictions)
+solution$prediction <- ifelse(solution$prediction == "yes", 1, 0)
+
+# Write the solution to file
+write.csv(solution, file = '~/Documents/R/data/DTPredictions.csv', row.names = F)
