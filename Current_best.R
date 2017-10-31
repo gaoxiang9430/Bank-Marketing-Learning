@@ -63,10 +63,11 @@ testFromTrainingSet <- train[-TrainingDataIndex,]
 
 #build two tasks for local testing
 traintask <- makeClassifTask(data = trainFromTrainingSet,target = "y")
-testtask <- makeClassifTask(data = testFromTrainingSet,target = "y")
+traintask <- filterFeatures(traintask, method = "rf.importance", abs = 8)
 
 #build two task for training and testing
 allTraintask <- makeClassifTask(data = train,target = "y")
+allTraintask <- filterFeatures(allTraintask, method = "rf.importance", abs = 8)
 
 #create a learner
 rdesc <- makeResampleDesc("CV",iters=5L)
@@ -85,10 +86,12 @@ rf.lrn$par.vals <- list(importance=TRUE, ntree = 603, mtry = 5, nodesize=36, cut
 #r <- resample(learner = rf.lrn, task = allTraintask, resampling = rdesc, measures = list(tpr,fpr,fnr,fpr,acc, mcc), show.info = T)
 
 #local training and evaluation
-model <- train(rf.lrn, traintask)
-pred <- predict(model, testtask)
-calculateConfusionMatrix(pred)
-mcc(as.data.frame(pred)$response, as.data.frame(pred)$truth)
+#model <- train(rf.lrn, traintask)
+#pred <- predict(model, newdata = testFromTrainingSet)
+#calculateConfusionMatrix(pred)
+#mcc(as.data.frame(pred)$response, as.data.frame(pred)$truth)
+#d = generateThreshVsPerfData(pred, measures = list(mcc))
+#plotThreshVsPerf(d)
 
 #training and testing
 model <- train(rf.lrn, allTraintask)
@@ -96,4 +99,4 @@ pred <- predict(model, newdata = test)
 
 #write results back to file
 solution <- data.frame(id = originaltest$id, prediction = as.data.frame(pred)$response)
-write.csv(solution, file = 'data/rf_mod_Solution3.csv', row.names = F)
+write.csv(solution, file = 'data/rf_mod_Solution3_2.csv', row.names = F)
