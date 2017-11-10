@@ -6,33 +6,37 @@ import pandas as pd
 from sklearn.metrics import matthews_corrcoef
 import matplotlib.pyplot as plt
 import csv
+from sklearn.cross_validation import train_test_split
 
-# Import MNIST data_nn
 model_name = 'model'
-model_path = 'F:/Data Mining Project/Models' #path to save the model
+model_path = '/home/sandareka/Tensorflow/Data_Mining_Project' #'F:/Data Mining Project/Models' #path to save the model
+
+is_GPU = True
+
+if is_GPU == True:
+    device_name = "/gpu:0"
+else:
+    device_name = "/cpu:0"
 
 
 def csv_to_numpy_array(filePath, delimiter):
     return np.genfromtxt(filePath, delimiter=delimiter, dtype=None)
 
 def import_data():
-    print("loading training data_nn")
-    dataX =  np.delete(np.genfromtxt("data_nn/pre_processed_training_data.csv", delimiter=","), 0, axis=0)
-    dataY = np.delete(np.genfromtxt("data_nn/training_labels.csv", delimiter=","), 0, axis=0)
-    trainX = dataX[0:27500,]
-    trainY = dataY[0:27500,]
-    print("loading validation data_nn")
-    validationX = dataX[27500:dataX.shape[0],]
-    validationY = dataY[27500:dataY.shape[0], ]
-    print("loading test data_nn")
-    testX = np.delete(np.genfromtxt("data_nn/pre_processed_testing_data.csv", delimiter=","), 0, axis=0)
+    print("loading training and validation data")
+    dataX =  np.delete(np.genfromtxt("data_nn/pre_processed_training_data_11_10_3.csv", delimiter=","), 0, axis=0)
+    dataY = np.delete(np.genfromtxt("data_nn/training_labels_11_10_3.csv", delimiter=","), 0, axis=0)
+    trainX, validationX, trainY, validationY = train_test_split(dataX, dataY, test_size=0.1, random_state=100)
+
+    print("loading testing data")
+    testX = np.delete(np.genfromtxt("data_nn/pre_processed_testing_data_11_10_3.csv", delimiter=","), 0, axis=0)
     return trainX,trainY,validationX,validationY,testX
 
 #Given the label returns one hot representation of that lable
 def convert_to_one_hot_representation(data_set):
     new_data_set = np.zeros(shape=(len(data_set), 2))
     for i in range(len(data_set)):
-        new_data_set[i, data_set[i]] = 1
+        new_data_set[i, int(data_set[i])] = 1
 
     return new_data_set
 
@@ -50,66 +54,97 @@ validationY = convert_to_one_hot_representation(validation_label)
 
 # Parameters
 learning_rate = 0.0001
-training_epochs = 500
-batch_size = 10
+training_epochs = 1000
+batch_size = 50
 display_step = 1
+positive_class_frequency = 0.12
+negative_class_frequency = 0.88
+
+#200 x 4, 0.0001, 1000, 57.49
 
 # Network Parameters
-n_hidden_1 = 256 # 1st layer number of neurons
-n_hidden_2 = 256 # 2nd layer number of neurons
-n_hidden_3 = 256 # 3rd layer number of neurons
-n_hidden_3 = 200 # 4th layer number of neurons
+n_hidden_1 = 64#2048#512#128#2500#256 # 1st layer number of neurons
+n_hidden_2 = 64#1024#256#64#2000#256 # 2nd layer number of neurons
+n_hidden_3 = 64#512#1500#256 # 3rd layer number of neurons
+n_hidden_4 = 64#512#200 # 4th layer number of neurons
+n_hidden_5 = 64
+n_hidden_6 = 64
+n_hidden_7 = 64
 n_input = trainX.shape[1] # Number of features
 n_classes = 2 #Binary classification
 
-# tf Graph input
-X = tf.placeholder("float", [None, n_input])
-Y = tf.placeholder("float", [None, n_classes])
-dropout_keep_prob = tf.placeholder(tf.float32)
+with tf.device(device_name):
+    # tf Graph input
+    X = tf.placeholder("float", [None, n_input])
+    Y = tf.placeholder("float", [None, n_classes])
+    dropout_keep_prob = tf.placeholder(tf.float32)
 
-# Store layers weight & bias
-weights = {
-    'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
-    'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
-    'h3': tf.Variable(tf.random_normal([n_hidden_2, n_hidden_3])),
-    'out': tf.Variable(tf.random_normal([n_hidden_3, n_classes]))
-}
-biases = {
-    'b1': tf.Variable(tf.random_normal([n_hidden_1])),
-    'b2': tf.Variable(tf.random_normal([n_hidden_2])),
-    'b3': tf.Variable(tf.random_normal([n_hidden_3])),
-    'out': tf.Variable(tf.random_normal([n_classes]))
-}
+    initializer = tf.contrib.layers.xavier_initializer()
 
-
-# Create model
-def multilayer_perceptron(x):
-    # Hidden fully connected layer with 256 neurons
-    layer_1 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(x, weights['h1']), biases['b1'])), dropout_keep_prob)
-    # Hidden fully connected layer with 256 neurons
-    layer_2 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])), dropout_keep_prob)
-    # Hidden fully connected layer with 256 neurons
-    layer_3 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_2, weights['h3']), biases['b3'])), dropout_keep_prob)
-    # Output fully connected layer with a neuron for each class
-    out_layer = tf.matmul(layer_3, weights['out']) + biases['out']
-    return out_layer
+    # Store layers weight & bias
+    weights = {
+        'h1': tf.Variable(initializer([n_input, n_hidden_1])),
+        'h2': tf.Variable(initializer([n_hidden_1, n_hidden_2])),
+        'h3': tf.Variable(initializer([n_hidden_2, n_hidden_3])),
+        'h4': tf.Variable(initializer([n_hidden_3, n_hidden_4])),
+        'h5': tf.Variable(initializer([n_hidden_4, n_hidden_5])),
+        'h6': tf.Variable(initializer([n_hidden_5, n_hidden_6])),
+        'h7': tf.Variable(initializer([n_hidden_6, n_hidden_7])),
+        'out': tf.Variable(initializer([n_hidden_7, n_classes]))
+    }
+    biases = {
+        'b1': tf.Variable(tf.zeros([n_hidden_1])),
+        'b2': tf.Variable(tf.zeros([n_hidden_2])),
+        'b3': tf.Variable(tf.zeros([n_hidden_3])),
+        'b4': tf.Variable(tf.zeros([n_hidden_4])),
+        'b5': tf.Variable(tf.zeros([n_hidden_5])),
+        'b6': tf.Variable(tf.zeros([n_hidden_6])),
+        'b7': tf.Variable(tf.zeros([n_hidden_7])),
+        'out': tf.Variable(tf.zeros([n_classes]))
+    }
 
 
-# Construct model
-logits = multilayer_perceptron(X)
+    # Create model
+    def multilayer_perceptron(x):
+        # Hidden fully connected layer with 256 neurons
+        layer_1 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(x, weights['h1']), biases['b1'])), dropout_keep_prob)
+        # Hidden fully connected layer with 256 neurons
+        layer_2 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])), dropout_keep_prob)
+        # Hidden fully connected layer with 256 neurons
+        layer_3 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_2, weights['h3']), biases['b3'])), dropout_keep_prob)
 
-softmaxed_logits = tf.nn.softmax(logits=logits,dim=1)
-predicted_results = tf.argmax(softmaxed_logits, 1)
+        layer_4 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_3, weights['h4']), biases['b4'])), dropout_keep_prob)
 
-# Define loss and optimizer
-loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-    logits=logits, labels=Y))
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-train_op = optimizer.minimize(loss_op)
-# Initializing the variables
-init = tf.global_variables_initializer()
+        layer_5 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_4, weights['h5']), biases['b5'])), dropout_keep_prob)
 
-with tf.Session() as sess:
+        layer_6 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_5, weights['h6']), biases['b6'])), dropout_keep_prob)
+
+        layer_7 = tf.nn.dropout(tf.nn.tanh(tf.add(tf.matmul(layer_6, weights['h7']), biases['b7'])), dropout_keep_prob)
+        # Output fully connected layer with a neuron for each class
+        out_layer = tf.nn.tanh(tf.add(tf.matmul(layer_7, weights['out']),biases['out']))
+        return out_layer
+
+
+    # Construct model
+    logits = multilayer_perceptron(X)
+
+    softmaxed_logits = tf.nn.softmax(logits=logits,dim=1)
+    predicted_results = tf.argmax(softmaxed_logits, 1)
+
+    #predicted_results = tf.greater(softmaxed_logits, 1)
+
+    # Define loss and optimizer
+
+    loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        logits=logits, labels=Y))
+    global_step = tf.Variable(0, trainable=False)
+    learning_rate = tf.train.exponential_decay(learning_rate, global_step, int(trainX.shape[0] / batch_size),0.95)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+    train_op = optimizer.minimize(loss_op)
+    # Initializing the variables
+    init = tf.global_variables_initializer()
+
+with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
     saver = tf.train.Saver(max_to_keep=100)
     global_step = tf.Variable(0, trainable=False)
@@ -127,7 +162,7 @@ with tf.Session() as sess:
         for start, end in zip(range(0, len(index), batch_size), range(batch_size, len(index), batch_size)):
             batch_x = trainX[index[start:end]]
             batch_y = trainY[index[start:end]]
-            dropout_keep_prob_input = 0.5
+            dropout_keep_prob_input = 0.5#0.5
             # Run optimization op (backprop) and cost op (to get loss value)
             _, loss_value = sess.run([train_op, loss_op], feed_dict={X: batch_x,
                                                             Y: batch_y, dropout_keep_prob:dropout_keep_prob_input})
@@ -160,6 +195,7 @@ with tf.Session() as sess:
     plt.xlabel('epoch')
     plt.ylabel('training loss')
     plt.savefig('training_loss.png')
+    plt.clf()
 
     plt.rcParams['figure.figsize'] = (10.0, 8.0)  # set default size of plots
     plt.rcParams['image.interpolation'] = 'nearest'
@@ -172,7 +208,8 @@ with tf.Session() as sess:
     print("Optimization Finished!")
     print("Best MCC Score Achieved",best_mcc)
 
-with tf.Session() as sess:
+"""
+with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     # Test model
     saver = tf.train.Saver()
     saved_path = tf.train.latest_checkpoint(model_path)
@@ -183,6 +220,6 @@ with tf.Session() as sess:
     weighted_results = softmaxed_logits
     predicted_results = tf.argmax(softmaxed_logits, 1)
     returned_predicted_results = sess.run(predicted_results, feed_dict={X: testX,dropout_keep_prob: dropout_keep_prob_input})
-    write_output_file("results.csv",returned_predicted_results)
-
+    write_output_file("results_11_10_4.csv",returned_predicted_results)
+"""
 
