@@ -8,7 +8,7 @@ Requirements for Deep Learning Model
 --Numpy 1.13.1
 --matplotlib 2.1.0
 --sklearn 0.19.1
---R studio in Windows to run New_NN_Preprocessing.R file and listed libraries
+--R studio in Windows and listed libraries to run New_NN_Preprocessing.R file 
 
 
 
