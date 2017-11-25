@@ -11,12 +11,12 @@ In this project, we implement a set of machine learning method for predicting if
 
 #### Machine Learning Models
 We have implemented several models, including:
-a. Decision Tree
-b. Naive Bayes
-c. SVM
-d. Neural Net
-e. Random Forest
-f. Conditional Random Forests (cforest)
+* Decision Tree
+* Naive Bayes
+* SVM
+* Neural Net
+* Random Forest
+* Conditional Random Forests (cforest)
 
 #### Models Evaluations
 The evaluation of the performance of those models are based on Accurancy and Matthews correlation coefficient (MCC).
