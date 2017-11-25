@@ -1,4 +1,4 @@
-### Bank Marketing: predict if the client will subscribe a term deposit###
+### Bank Marketing: predict if the client will subscribe a term deposit
 
 In this project, we implement a set of machine learning method for predicting if the client will subscribe a term deposit. The data set can be found [here](https://data.world/uci/bank-marketing). The whole data set are devided into two part training set and testing set, which could be found in *data* directory.
 
